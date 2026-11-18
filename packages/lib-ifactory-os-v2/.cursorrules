@@ -1,0 +1,100 @@
+# ==============================================================================
+# CURSOR & AI CODING RULES FOR lib-ifactory-os-v2
+# ==============================================================================
+# This file governs all AI-assisted coding and automated edits in this repository.
+# Adhere strictly to these rules to prevent merge conflicts, architecture breakage,
+# and unnecessary file modifications.
+
+# ------------------------------------------------------------------------------
+# 1. ARCHITECTURAL INVARIANTS & SCOPE BOUNDARIES
+# ------------------------------------------------------------------------------
+# - This repository is a monorepo containing:
+#     1) Core OS Shell: `src/lib/os/`, `src/lib/appShell/`
+#     2) Product Flavors: `src/lib/os/flavors/` (`cloud`, `ioware`)
+#     3) Modular Apps: `src/pms-app/`, `src/aps-app/`, `src/ocr-app/`, etc.
+#
+# - STRICT LAYER SEPARATION:
+#   * Apps must NEVER leak into OS core files or flavor files.
+#   * NEVER import an app store (e.g., `pmsStore`, `hmi-store`) into `src/lib/os/` or `src/lib/os/flavors/`.
+#   * OS must remain 100% agnostic of specific app internal state.
+#
+# - BLAST RADIUS ENFORCEMENT:
+#   * When working on an app (e.g., `src/pms-app/`), edit ONLY files within that app's directory.
+#   * NEVER touch unrelated apps (e.g., `src/ocr-app/`, `src/aps-app/`) or root configuration files.
+
+# ------------------------------------------------------------------------------
+# 2. STRICT "DO NOT TOUCH" ZONE (PROTECTED FILES)
+# ------------------------------------------------------------------------------
+# NEVER modify the following files unless explicitly requested by the user:
+#   - Build & Config:
+#       * `svelte.config.js`
+#       * `vite.config.ts`
+#       * `tsconfig.json`
+#       * `package.json` / `package-lock.json`
+#       * `.lintstagedrc.json` / `commitlint.config.js`
+#   - Core OS Shell Architecture:
+#       * `src/lib/appShell/AppShell.svelte`
+#       * `src/lib/os/Desktop.svelte`
+#       * `src/lib/os/IFactoryOS.svelte`
+#       * `src/lib/os/TaskBar.svelte`
+#       * `src/lib/os/index.svelte.ts`
+#       * `src/lib/os/flavors/types.ts`
+#   - Deployment & Tooling:
+#       * `release.sh`
+#       * `Dockerfile*`
+#       * `resources/*`
+#       * `ota-templates/*`
+
+# ------------------------------------------------------------------------------
+# 3. AUTHENTICATION & SHELL CHROME INTEGRITY
+# ------------------------------------------------------------------------------
+# - AUTHENTICATION BELONGS TO THE OS LOCKSCREEN:
+#   * Operator/User login, credentials verification, and session lifecycle are handled
+#     exclusively by `src/lib/os/Lockscreen.ioware.svelte` (for ioWare) or `Lockscreen.svelte` (cloud).
+#   * NEVER create an in-app login page (e.g., `MachineLogin.svelte`).
+#   * NEVER gate app routes behind an in-app login check when the OS lockscreen exists.
+#   * Edge HMI apps (like `pms-app`) must assume the operator is already authenticated
+#     once the app opens, starting directly at the operational entry point (e.g., `StartJob`).
+#
+# - SHELL CHROME IS IMMUTABLE:
+#   * Do NOT add visibility toggles or hooks to hide the OS MenuBar or TaskBar
+#     (e.g., `showTopbar`, `isTopbarVisible`, `taskBar.visible`).
+#   * MenuBar and TaskBar must always remain visible and managed by `IFactoryOS.svelte`.
+
+# ------------------------------------------------------------------------------
+# 4. COMPONENT REUSE & DESIGN SYSTEM FIRST
+# ------------------------------------------------------------------------------
+# - BEFORE writing any new component or raw HTML, ALWAYS check:
+#     1) `@ifactory/ui-v2`: `Button`, `Input`, `Label`, `Dialog`, `Keyboard`, `Tabs`, etc.
+#     2) Shared OS primitives: `src/lib/components/`
+#     3) Existing App components: e.g. `TimerDisplay.svelte`, `Stat.svelte`,
+#        `StatusBanner.svelte`, `ReasonSummaryCard.svelte`, `SectionHeading.svelte`, `JobHeader.svelte`.
+#
+# - NEVER reinvent existing wheels:
+#   * Timers, countdowns, metric badges, confirmation dialogs, and headers already exist.
+#   * Reuse existing styles and tokens:
+#       - Primary Brand: `#FF6C2E` (Accent Orange)
+#       - Dark Base: `#222222` / `#1B2028`
+#       - Error / Alert: `#EF4444` / `status-error`
+#       - Success / Online: `status-online`
+#       - Typography: `Space Grotesk` (headings/metrics), `Manrope` (body/details)
+
+# ------------------------------------------------------------------------------
+# 5. SAFE "WIPE CODING" & NON-DESTRUCTIVE EDITS
+# ------------------------------------------------------------------------------
+# - When rewriting or refactoring a screen:
+#   * PRESERVE all existing business logic:
+#       - Timers & intervals (`setInterval`, live duration counters).
+#       - Active subscriptions (MQTT handlers, store bindings).
+#       - Navigation transitions & prefilled state parameters.
+#   * NEVER silently drop existing functional features (e.g., live stopped timers).
+#   * Do NOT introduce formatting diffs or `<!-- svelte-ignore -->` comments into untouched files.
+#   * Keep diffs surgical, focused, and review-friendly.
+
+# ------------------------------------------------------------------------------
+# 6. VERIFICATION & PRE-COMMIT QUALITY GATES
+# ------------------------------------------------------------------------------
+# - Before considering any task complete:
+#     1) Run `git status` and `git diff --stat`: Verify that ONLY expected files are modified.
+#     2) Run `npm run check` (svelte-check): Verify zero TypeScript or Svelte compilation errors.
+#     3) Run `npm run lint`: Verify ESLint and Prettier formatting compliance.

@@ -1,0 +1,93 @@
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { DataTable, type DataTableColumn } from '@ifactory/ui-v2';
+	import { Building2 } from '@lucide/svelte';
+	import { listOcrStructures, type OcrStructureOption } from '../lib/ocr-drawings.api.js';
+	import { ocrBomsListHash } from '../lib/ocr-routes.js';
+	import { errorDescription } from '../../lib/api/types.js';
+	import { ocrPushErrorToast } from '../lib/toast.js';
+
+	let { params }: { params: { projectId: string } } = $props();
+	const projectId = $derived(params.projectId);
+
+	let structures = $state<OcrStructureOption[]>([]);
+	let isLoading = $state(true);
+
+	function handleView(row: OcrStructureOption) {
+		window.location.hash = ocrBomsListHash(projectId, {
+			kind: 'tower',
+			towerId: row.structureId
+		});
+	}
+
+	const columns = $derived.by((): DataTableColumn<OcrStructureOption>[] => [
+		{
+			type: 'serial',
+			key: 'sNo',
+			header: 'S.No',
+			value: (row) => String(structures.indexOf(row) + 1)
+		},
+		{
+			type: 'text',
+			key: 'name',
+			header: 'Name',
+			sortable: true,
+			filterable: true,
+			dataType: 'string',
+			value: (row) => row.name
+		},
+		{
+			type: 'actions',
+			key: 'actions',
+			header: 'Actions',
+			headerClass: 'text-right',
+			class: 'text-right',
+			actions: (row) => [
+				{
+					type: 'button',
+					label: 'View',
+					variant: 'primary',
+					size: 'sm',
+					onClick: () => handleView(row)
+				}
+			]
+		}
+	]);
+
+	onMount(() => {
+		const controller = new AbortController();
+		void (async () => {
+			isLoading = true;
+			try {
+				structures = await listOcrStructures(projectId, 'tower', controller.signal);
+			} catch (err) {
+				structures = [];
+				ocrPushErrorToast({
+					title: 'Could not load tower types',
+					description: errorDescription(err)
+				});
+			} finally {
+				isLoading = false;
+			}
+		})();
+		return () => controller.abort();
+	});
+</script>
+
+<div class="flex h-full min-h-0 flex-col overflow-hidden p-3 md:p-4">
+	<DataTable
+		{columns}
+		rows={structures}
+		loading={isLoading}
+		rowKey={(row) => row.structureId}
+		onRowClick={handleView}
+		search={{ enabled: true, placeholder: 'Search tower types...' }}
+		export={{ enabled: false }}
+		emptyState={{
+			icon: Building2,
+			title: 'No tower types',
+			description: 'This project has no tower types yet.'
+		}}
+		pagination={{ pageSize: 15 }}
+	/>
+</div>

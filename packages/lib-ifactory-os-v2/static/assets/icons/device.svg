@@ -1,0 +1,29 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip_device)">
+<rect width="40" height="40" rx="10" fill="url(#bg_device)"/>
+<!-- Original about/info (49×48) scaled into tile -->
+<g transform="translate(3.5 4) scale(0.67)">
+  <circle cx="24.5" cy="24" r="20" fill="url(#info_grad)"/>
+  <path d="M24.5 14C25.3284 14 26 14.6716 26 15.5C26 16.3284 25.3284 17 24.5 17C23.6716 17 23 16.3284 23 15.5C23 14.6716 23.6716 14 24.5 14Z" fill="white"/>
+  <path d="M23 21H26V34H23V21Z" fill="white"/>
+</g>
+</g>
+<rect x="0.25" y="0.25" width="39.5" height="39.5" rx="9.75" stroke="url(#stroke_device)" stroke-width="0.5"/>
+<defs>
+<linearGradient id="bg_device" x1="20" y1="0" x2="20" y2="40" gradientUnits="userSpaceOnUse">
+<stop stop-color="#222222"/>
+<stop offset="1"/>
+</linearGradient>
+<linearGradient id="stroke_device" x1="20" y1="0" x2="20" y2="40" gradientUnits="userSpaceOnUse">
+<stop/>
+<stop offset="1" stop-color="#222222"/>
+</linearGradient>
+<linearGradient id="info_grad" x1="24.5" y1="4" x2="24.5" y2="44" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FF6C2E"/>
+<stop offset="1" stop-color="#FFC700"/>
+</linearGradient>
+<clipPath id="clip_device">
+<rect width="40" height="40" rx="10" fill="white"/>
+</clipPath>
+</defs>
+</svg>

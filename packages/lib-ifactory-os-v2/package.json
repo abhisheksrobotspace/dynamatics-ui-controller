@@ -1,0 +1,94 @@
+{
+	"name": "@ifactory/os-v2",
+	"version": "0.0.61",
+	"app_name": "ifactory-os",
+	"install_dir": "/home/rs/apps",
+	"scripts": {
+		"dev": "vite dev",
+		"dev:cloud": "VITE_OS_FLAVOR=cloud vite dev",
+		"dev:ioware": "VITE_OS_FLAVOR=ioware vite dev",
+		"build": "vite build",
+		"build:cloud": "VITE_OS_FLAVOR=cloud vite build",
+		"build:ioware": "VITE_OS_FLAVOR=ioware vite build",
+		"preview": "vite preview",
+		"prepare": "husky",
+		"prepack": "svelte-kit sync && svelte-package && publint",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"lint": "node ./node_modules/prettier/bin/prettier.cjs --check . && eslint .",
+		"format": "node ./node_modules/prettier/bin/prettier.cjs --write .",
+		"test:unit": "vitest",
+		"test": "npm run test:unit -- --run && npm run test:e2e",
+		"test:e2e": "playwright install && playwright test"
+	},
+	"files": [
+		"dist",
+		"!dist/**/*.test.*",
+		"!dist/**/*.spec.*"
+	],
+	"sideEffects": [
+		"**/*.css"
+	],
+	"svelte": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"svelte": "./dist/index.js"
+		}
+	},
+	"peerDependencies": {
+		"svelte": "^5.0.0"
+	},
+	"dependencies": {
+		"@fontsource/manrope": "^5.2.8",
+		"@fontsource/space-grotesk": "^5.2.10",
+		"@ifactory/ui-v2": "file:../lib-ifactory-ui-v2",
+		"@lucide/svelte": "^1.23.0",
+		"@neodrag/svelte": "^2.3.3",
+		"eventemitter3": "^5.0.4",
+		"mqtt": "^5.15.2",
+		"pdfmake": "^0.3.11",
+		"qrcode": "^1.5.4",
+		"rrule": "^2.8.1",
+		"uuid": "^14.0.2"
+	},
+	"devDependencies": {
+		"@commitlint/cli": "^21.2.0",
+		"@commitlint/config-conventional": "^21.2.0",
+		"@eslint/js": "^10.0.1",
+		"@playwright/test": "^1.60.0",
+		"@sveltejs/adapter-auto": "^7.0.1",
+		"@sveltejs/adapter-static": "^3.0.10",
+		"@sveltejs/kit": "^2.63.0",
+		"@sveltejs/package": "^2.5.8",
+		"@sveltejs/vite-plugin-svelte": "^7.1.2",
+		"@tailwindcss/forms": "^0.5.11",
+		"@tailwindcss/typography": "^0.5.19",
+		"@tailwindcss/vite": "^4.3.0",
+		"@types/node": "^24",
+		"@types/pdfmake": "^0.3.3",
+		"@types/qrcode": "^1.5.6",
+		"eslint": "^10.4.1",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-svelte": "^3.19.0",
+		"globals": "^17.6.0",
+		"husky": "^9.1.7",
+		"lint-staged": "^17.0.8",
+		"prettier": "^3.8.3",
+		"prettier-plugin-svelte": "^4.1.0",
+		"prettier-plugin-tailwindcss": "^0.8.0",
+		"publint": "^0.3.21",
+		"svelte": "^5.56.1",
+		"svelte-check": "^4.6.0",
+		"tailwindcss": "^4.3.0",
+		"typescript": "^6.0.3",
+		"typescript-eslint": "^8.60.1",
+		"vite": "^8.0.16",
+		"vitest": "^4.1.8"
+	},
+	"keywords": [
+		"svelte"
+	]
+}

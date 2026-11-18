@@ -1,0 +1,81 @@
+# OTA Update for {{APP_NAME}} v{{APP_VERSION}}
+ENV UPDATE_TYPE ui_app
+ENV APP_NAME {{APP_NAME}}
+ENV APP_VERSION {{APP_VERSION}}
+ENV INSTALL_DIR {{INSTALL_DIR}}
+ENV BUNDLE_DEPS {{BUNDLE_DEPS}}
+
+# Error handling
+ON_ERROR ROLLBACK_TO_CHECKPOINT app_backup
+
+# Create backup checkpoint
+CHECKPOINT app_backup {{INSTALL_DIR}}/{{APP_NAME}}
+
+# Stage new application
+WORKDIR $INSTALL_DIR/rs-ota-tmp-staging
+COPY app_content.tar.gz ./app.tar.gz
+RUN tar -xzf app.tar.gz
+VALIDATE DIRECTORY ./app
+
+# Copy environment file if it exists
+# COPY_IF_EXISTS {{INSTALL_DIR}}/{{APP_NAME}}/.env ./app/.env
+
+# Validate the staged application
+# VALIDATE FILE ./app/resources/{{APP_NAME}}.supervisor.conf
+VALIDATE DIRECTORY ./app/_app
+
+# Stop current application (if running)
+RUN supervisorctl stop electron-app || true
+
+# Deploy nginx configuration.
+# deploy-prod-apps/nginx already exists on the image. activate symlinks
+# sites-enabled at /home/rs/deploy-prod-apps/nginx/{{APP_NAME}}.conf, so that
+# master is the file nginx serves. Overwrite it and keep the link pointed there.
+RUN cp {{APP_NAME}}.conf /home/rs/deploy-prod-apps/nginx/{{APP_NAME}}.conf
+RUN chown root:root /home/rs/deploy-prod-apps/nginx/{{APP_NAME}}.conf
+RUN chmod 0644 /home/rs/deploy-prod-apps/nginx/{{APP_NAME}}.conf
+
+# Disable default nginx site and enable our app site from the deploy-prod-apps master
+RUN rm -f /etc/nginx/sites-enabled/default || echo "Default site not found"
+RUN rm -f /etc/nginx/sites-enabled/io-board-testing-ui.conf || echo "Default site not found"
+RUN ln -sfn /home/rs/deploy-prod-apps/nginx/{{APP_NAME}}.conf /etc/nginx/sites-enabled/{{APP_NAME}}.conf
+
+# Job-card drawings are served from outside the app tree (alias /artifacts/).
+# The directory must exist, and every parent must be traversable by www-data,
+# before nginx is reloaded. Otherwise loopback GET /artifacts/ returns 403
+# even when the location allow rules are correct.
+RUN mkdir -p /home/rs/data/artifacts
+RUN chmod 0755 /home/rs /home/rs/data /home/rs/data/artifacts
+
+# Test nginx configuration
+RUN nginx -t || echo "Nginx config validation failed - continuing anyway"
+
+# Restart nginx service
+RUN systemctl restart nginx || echo "Nginx restart failed - continuing anyway"
+
+# Atomic replacement of application
+ATOMIC_SWAP ./app {{INSTALL_DIR}}/{{APP_NAME}}
+
+# Fix permissions for nginx to serve files
+# First ensure parent directories are accessible (nginx needs execute permission to traverse)
+RUN chmod 755 /home/rs
+RUN chmod 755 {{INSTALL_DIR}}
+
+# Change ownership and permissions of the application directory
+RUN chown -R www-data:www-data {{INSTALL_DIR}}/{{APP_NAME}}
+RUN chmod -R 755 {{INSTALL_DIR}}/{{APP_NAME}}
+
+# Ensure files are readable
+RUN find {{INSTALL_DIR}}/{{APP_NAME}} -type f -exec chmod 644 {} \;
+RUN find {{INSTALL_DIR}}/{{APP_NAME}} -type d -exec chmod 755 {} \;
+
+# Update supervisor configuration
+RUN supervisorctl reread
+RUN supervisorctl update
+RUN supervisorctl start {{APP_NAME}} 2>/dev/null || true
+# Additional service restart for UI applications
+# RUN supervisorctl restart {{APP_NAME}} || echo "Application restart failed - continuing anyway"
+RUN supervisorctl reload
+
+# Cleanup staging area
+RUN rm -rf $INSTALL_DIR/rs-ota-tmp-staging

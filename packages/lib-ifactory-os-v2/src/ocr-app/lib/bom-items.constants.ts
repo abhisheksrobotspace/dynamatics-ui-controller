@@ -1,0 +1,1 @@
+export const PROJ_BOM_ITEMS_LIST_LIMIT = 2500;

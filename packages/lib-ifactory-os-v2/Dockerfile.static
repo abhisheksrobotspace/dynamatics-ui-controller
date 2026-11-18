@@ -1,0 +1,12 @@
+# Carrier image for the iFactoryOS static SPA.
+#
+# This image is NOT a running server. It only holds the built static site at /os.
+# The VM's pull-deploy (Track B) does `docker create` + `docker cp <id>:/os` into
+# the ifactory_apps volume's /os, and the core container's Caddy serves it live
+# (`root /ifactory_apps/os`, `try_files {path} /200.html`). Swapping os does not
+# restart the core container.
+#
+#   npm ci && npm run build        # produces ./build
+#   docker build -f Dockerfile.static -t <registry>/ifactory-os-static:<tag> .
+FROM busybox:stable
+COPY build /os

@@ -1,0 +1,15 @@
+{
+  "name": "dynamatics-test-rig-ui",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dynamatics TG17 Hydraulic Test Rig - HMI Touchscreen UI for ioWare Pro 100 / iFactory OS",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build:ioware --workspace=@ifactory/os-v2",
+    "build:ioware": "npm run build:ioware --workspace=@ifactory/os-v2",
+    "dev:ioware": "npm run dev:ioware --workspace=@ifactory/os-v2",
+    "deploy": "rsync -avz packages/lib-ifactory-os-v2/build/ rs@${IOWARE_IP:-192.168.2.180}:/home/rs/apps/ifactory-os/ && ssh rs@${IOWARE_IP:-192.168.2.180} 'sudo systemctl reload nginx && sudo supervisorctl restart electron-app'"
+  }
+}

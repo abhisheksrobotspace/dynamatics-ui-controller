@@ -1,0 +1,21 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+@import '../lib/styles/tokens.css';
+@source '../../node_modules/@ifactory/ui-v2/dist';
+
+@layer base {
+	body {
+		@apply bg-background font-body text-foreground antialiased;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		@apply font-heading;
+	}
+}

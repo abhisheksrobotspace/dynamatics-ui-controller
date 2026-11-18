@@ -1,0 +1,136 @@
+name: Build OS static image
+
+# Builds the iFactoryOS SPA into a static bundle and publishes a carrier image to
+# DOCR. Deploys independently of the backend — the VM extracts /os into the
+# ifactory_apps volume without restarting the core container.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ui_ref:
+        description: 'lib-ifactory-ui-v2 ref to build against'
+        required: false
+        default: 'develop'
+      moving_tag:
+        description: 'Moving tag to publish (blank = derived from branch; develop→dev)'
+        required: false
+        default: ''
+  push:
+    branches:
+      # develop → :dev. Per-customer branches publish their own moving tag
+      # (branch name), e.g. jyoti → ifactory-os-static:jyoti. The VM's Track B
+      # (OS_APPS) deploys each tag into its own bundle dir.
+      - develop
+      - jyoti
+      - jyotiuat
+
+concurrency:
+  group: build-os-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_REPO: ifactory-os-static
+  DOCKER_BUILDKIT: '1'
+
+jobs:
+  build-push:
+    name: Build & push OS static image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout os-v2
+        uses: actions/checkout@v4
+        with:
+          path: lib-ifactory-os-v2
+
+      # os-v2 depends on @ifactory/ui-v2 via `file:../lib-ifactory-ui-v2`, so ui-v2
+      # must sit next to it and be built (dist/) before os-v2's npm ci.
+      - name: 'Checkout ui-v2 (sibling for the file: dependency)'
+        uses: actions/checkout@v4
+        with:
+          repository: Robotspace-in/lib-ifactory-ui-v2
+          ref: ${{ github.event.inputs.ui_ref || 'develop' }}
+          path: lib-ifactory-ui-v2
+          token: ${{ secrets.UI_REPO_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Build ui-v2 (produces dist/ consumed by os-v2)
+        working-directory: lib-ifactory-ui-v2
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build os-v2 static site (produces build/)
+        working-directory: lib-ifactory-os-v2
+        # VITE_OCR_MODE=core bakes the OCR adapter into CORE mode: the OCR flow goes
+        # through the core (datahub CRUD / jobs / file-service) instead of calling the
+        # OCR PoC directly. This flips the deployed dev OS to core mode. To switch the
+        # deploy back to the PoC path, drop the env (plain `npm run build`, poc default).
+        # (.env* is gitignored here, so the mode is set in CI, not an .env file.)
+        run: |
+          npm ci
+          VITE_OCR_MODE=core npm run build
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DOCR_TOKEN }}
+
+      - name: Log in to DOCR
+        run: doctl registry login
+
+      - name: Resolve image tags
+        id: meta
+        run: |
+          SHA="$(git -C lib-ifactory-os-v2 rev-parse --short=12 HEAD)"
+          MOVING="${{ github.event.inputs.moving_tag }}"
+          if [ -z "$MOVING" ]; then
+            MOVING="${GITHUB_REF_NAME//\//-}"
+            [ "$MOVING" = "develop" ] && MOVING="dev"
+          fi
+          echo "sha=$SHA"       >> "$GITHUB_OUTPUT"
+          echo "moving=$MOVING" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push carrier image
+        working-directory: lib-ifactory-os-v2
+        run: |
+          set -euo pipefail
+          IMG="${{ secrets.DOCR_REGISTRY }}/${IMAGE_REPO}"
+          SHA="${{ steps.meta.outputs.sha }}"
+          MOVING="${{ steps.meta.outputs.moving }}"
+          docker build -f Dockerfile.static -t "${IMG}:${SHA}" -t "${IMG}:${MOVING}" .
+          # Retry each push so a transient registry hiccup can't leave the moving
+          # tag pointing at a stale image.
+          push() { for i in 1 2 3; do docker push "$1" && return 0; echo "push $1 failed (try $i)"; sleep 5; done; return 1; }
+          push "${IMG}:${SHA}"
+          push "${IMG}:${MOVING}"
+          # Verify the moving tag now resolves to the exact image we just built
+          # (same digest as the immutable sha tag) — fail loudly otherwise.
+          D_SHA="$(docker buildx imagetools inspect "${IMG}:${SHA}" | awk '/^Digest:/{print $2}')"
+          D_MOVING="$(docker buildx imagetools inspect "${IMG}:${MOVING}" | awk '/^Digest:/{print $2}')"
+          echo "digest: ${SHA}=${D_SHA}  ${MOVING}=${D_MOVING}"
+          if [ -z "$D_MOVING" ] || [ "$D_MOVING" != "$D_SHA" ]; then
+            echo "::error::moving tag '${MOVING}' does not resolve to the just-built image (${SHA})"
+            exit 1
+          fi
+
+      - name: Prune old DOCR sha tags (keep last 5; never a moving tag)
+        env:
+          KEEP: '5'
+        run: |
+          # Prune ONLY immutable sha tags (12-hex from --short=12). This protects EVERY
+          # moving tag automatically — dev and every per-customer tag (jyoti, jyotiuat, …)
+          # coexist in this one repo, so the old "keep only the current MOVING" filter would
+          # have pruned other tenants' tags. Keep the newest $KEEP sha builds; drop the rest.
+          doctl registry repository list-tags "${IMAGE_REPO}" -o json \
+            | jq -r 'sort_by(.updated_at) | reverse | .[] | select(.tag | test("^[0-9a-f]{12}$")) | .tag' \
+            | tail -n "+$((KEEP + 1))" \
+            | while read -r tag; do
+                [ -n "$tag" ] || continue
+                echo "pruning ${IMAGE_REPO}:$tag"
+                doctl registry repository delete-tag "${IMAGE_REPO}" "$tag" --force || true
+              done
+          echo "(blob storage reclaimed by the weekly garbage-collection workflow)"

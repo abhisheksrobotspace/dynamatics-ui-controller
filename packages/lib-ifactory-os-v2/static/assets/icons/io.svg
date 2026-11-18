@@ -1,0 +1,35 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip_io)">
+<rect width="40" height="40" rx="10" fill="url(#bg_io)"/>
+<!-- Clean dual I/O connectors + center node (matches original io motif) -->
+<g transform="translate(20 20)">
+  <!-- Left connector column -->
+  <path d="M-12 -11.5C-12 -12.3 -11.3 -13 -10.5 -13C-9.7 -13 -9 -12.3 -9 -11.5V-8H-7.5C-6.7 -8 -6 -7.3 -6 -6.5V-2H-4V2H-6V6.5C-6 7.3 -6.7 8 -7.5 8H-9V11.5C-9 12.3 -9.7 13 -10.5 13C-11.3 13 -12 12.3 -12 11.5V8H-13.5C-14.3 8 -15 7.3 -15 6.5V-6.5C-15 -7.3 -14.3 -8 -13.5 -8H-12V-11.5Z" fill="#FEC501"/>
+  <!-- Right connector column -->
+  <path d="M12 -11.5C12 -12.3 11.3 -13 10.5 -13C9.7 -13 9 -12.3 9 -11.5V-8H7.5C6.7 -8 6 -7.3 6 -6.5V-2H4V2H6V6.5C6 7.3 6.7 8 7.5 8H9V11.5C9 12.3 9.7 13 10.5 13C11.3 13 12 12.3 12 11.5V8H13.5C14.3 8 15 7.3 15 6.5V-6.5C15 -7.3 14.3 -8 13.5 -8H12V-11.5Z" fill="url(#io_grad)"/>
+  <!-- Center node -->
+  <circle cx="0" cy="0" r="3.2" fill="url(#io_grad)"/>
+  <circle cx="0" cy="0" r="1.4" fill="#D9D9D9"/>
+  <!-- Bridge lines -->
+  <path d="M-4 0H-6M4 0H6" stroke="#FEC501" stroke-width="1.5" stroke-linecap="round"/>
+</g>
+</g>
+<rect x="0.25" y="0.25" width="39.5" height="39.5" rx="9.75" stroke="url(#stroke_io)" stroke-width="0.5"/>
+<defs>
+<linearGradient id="bg_io" x1="20" y1="0" x2="20" y2="40" gradientUnits="userSpaceOnUse">
+<stop stop-color="#222222"/>
+<stop offset="1"/>
+</linearGradient>
+<linearGradient id="stroke_io" x1="20" y1="0" x2="20" y2="40" gradientUnits="userSpaceOnUse">
+<stop/>
+<stop offset="1" stop-color="#222222"/>
+</linearGradient>
+<linearGradient id="io_grad" x1="4" y1="-13" x2="15" y2="13" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FF6C2E"/>
+<stop offset="1" stop-color="#FEC501"/>
+</linearGradient>
+<clipPath id="clip_io">
+<rect width="40" height="40" rx="10" fill="white"/>
+</clipPath>
+</defs>
+</svg>

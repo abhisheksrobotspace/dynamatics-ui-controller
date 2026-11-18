@@ -1,0 +1,20 @@
+<script lang="ts">
+	let { class: className = '' } = $props();
+</script>
+
+<svg
+	class={className}
+	width="16"
+	height="16"
+	viewBox="0 0 16 16"
+	fill="none"
+	xmlns="http://www.w3.org/2000/svg"
+>
+	<path
+		d="M3 13L8.00002 8.00002M8.00002 8.00002L13 3M8.00002 8.00002L3 3M8.00002 8.00002L13 13"
+		stroke="#7A7A7A"
+		stroke-width="1.25"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+	/>
+</svg>

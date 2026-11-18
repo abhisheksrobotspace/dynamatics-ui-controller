@@ -1,0 +1,49 @@
+{
+  "version": "{{APP_VERSION}}",
+  "checksum": "{{PACKAGE_CHECKSUM}}",
+  "algorithm": "sha256",
+  "description": "{{APP_NAME}} v{{APP_VERSION}} OTA package",
+  "app_metadata": {
+    "app_name": "{{APP_NAME}}",
+    "install_dir": "{{INSTALL_DIR}}",
+    "bundle_dependencies": {{BUNDLE_DEPS}},
+    "created_at": "{{CREATED_AT}}",
+    "type": "ui_app",
+    "author": "{{AUTHOR}}",
+    "license": "{{LICENSE}}"
+  },
+  "runtime_requirements": {
+    "min_node_version": "{{MIN_NODE_VERSION}}",
+    "supervisor_required": true,
+    "nginx_required": true
+  },
+  "file_details": {
+    "app_tarball": {
+      "name": "app_content.tar.gz",
+      "size_bytes": {{APP_TARBALL_SIZE}},
+      "checksum": "{{APP_TARBALL_CHECKSUM}}"
+    },
+    "otafile": {
+      "name": "Otafile",
+      "size_bytes": {{OTAFILE_SIZE}},
+      "checksum": "{{OTAFILE_CHECKSUM}}"
+    },
+    "nginx_config": {
+      "name": "{{APP_NAME}}.conf",
+      "size_bytes": {{NGINX_CONFIG_SIZE}},
+      "checksum": "{{NGINX_CONFIG_CHECKSUM}}"
+    }
+  },
+  "compatibility": {
+    "rs_runtime_min_version": "{{RS_RUNTIME_MIN_VERSION}}",
+    "target_platforms": {{TARGET_PLATFORMS}},
+    "os_requirements": {{OS_REQUIREMENTS}}
+  },
+  "deployment_config": {
+    "nginx_sites_available_path": "/etc/nginx/sites-available/{{APP_NAME}}.conf",
+    "nginx_sites_enabled_path": "/etc/nginx/sites-enabled/{{APP_NAME}}.conf",
+    "document_root": "{{INSTALL_DIR}}/{{APP_NAME}}",
+    "requires_nginx_restart": true,
+    "requires_supervisor_restart": true
+  }
+}

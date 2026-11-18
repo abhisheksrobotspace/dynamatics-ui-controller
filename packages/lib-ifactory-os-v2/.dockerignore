@@ -1,0 +1,10 @@
+# Keep the Docker build context tiny — the carrier image only needs build/.
+node_modules
+.svelte-kit
+.git
+src
+static
+tests
+e2e
+playwright-report
+test-results
